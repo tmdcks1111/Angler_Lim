@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>임승찬 술약속 예약</title>
+<style>
+  :root {
+    --main: #ff6b2c;
+    --main-weak: #fff1ea;
+    --text: #222;
+    --sub: #767676;
+    --line: #ebebeb;
+    --bg: #f4f5f7;
+    --disabled: #c8c8c8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.45;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  input, textarea { font: inherit; }
+  .app { max-width: 480px; margin: 0 auto; background: #fff; min-height: 100vh; padding-bottom: 110px; }
+
+  /* 상단 바 */
+  .topbar { position: sticky; top: 0; z-index: 20; height: 52px; display: flex; align-items: center;
+    padding: 0 16px; background: #fff; border-bottom: 1px solid var(--line); gap: 10px; }
+  .topbar h1 { font-size: 17px; font-weight: 700; flex: 1; text-align: center; margin-right: 28px; }
+  .topbar .back { width: 28px; font-size: 22px; }
+
+  /* 가게 정보 */
+  body { background: linear-gradient(rgba(20,12,8,.82), rgba(20,12,8,.82)), url('bg.jpg') center / cover fixed; }
+  .cover { aspect-ratio: 16 / 9; max-height: 270px; width: 100%; position: relative;
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 55%, rgba(0,0,0,.55)), url('bg.jpg') center / cover; }
+  .cover .badge { position: absolute; left: 16px; bottom: 12px; background: rgba(0,0,0,.55); color: #fff;
+    font-size: 12px; padding: 4px 9px; border-radius: 12px; }
+  .shop { padding: 18px 16px 16px; border-bottom: 8px solid var(--bg); }
+  .shop .cat { color: var(--sub); font-size: 13px; }
+  .shop h2 { font-size: 22px; margin: 2px 0 6px; }
+  .rating { font-size: 14px; color: var(--sub); }
+  .rating b { color: var(--text); }
+  .rating .star { color: var(--main); }
+  .info { margin-top: 14px; display: grid; gap: 8px; font-size: 14px; }
+  .info div { display: flex; gap: 10px; }
+  .info span:first-child { width: 20px; text-align: center; }
+  .tags { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .tags span { font-size: 12px; background: var(--bg); color: #555; padding: 4px 8px; border-radius: 4px; }
+
+  /* 섹션 공통 */
+  section.block { padding: 22px 16px; border-bottom: 8px solid var(--bg); }
+  .block-title { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+  .block-title h3 { font-size: 17px; }
+  .block-title small { color: var(--main); font-size: 13px; font-weight: 600; }
+  .req { color: var(--main); }
+
+  /* 달력 */
+  .cal-head { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 12px; }
+  .cal-head strong { font-size: 16px; min-width: 110px; text-align: center; }
+  .cal-head button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); font-size: 14px; }
+  .cal-head button:disabled { color: var(--disabled); cursor: default; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 4px; text-align: center; }
+  .cal .dow { font-size: 12px; color: var(--sub); padding: 4px 0 8px; }
+  .cal .dow:first-child { color: #e5484d; }
+  .cal .dow:last-child { color: #3e63dd; }
+  .day { height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 6px; }
+  .day button { width: 36px; height: 36px; border-radius: 50%; font-size: 15px; }
+  .day.sun button { color: #e5484d; }
+  .day.sat button { color: #3e63dd; }
+  .day .note { font-size: 10px; color: var(--sub); margin-top: -2px; height: 12px; }
+  .day.off button, .day.past button { color: var(--disabled) !important; cursor: default; }
+  .day.today button { box-shadow: inset 0 0 0 1px var(--main); }
+  .day.sel button { background: var(--main); color: #fff !important; font-weight: 700; }
+
+  /* 시간 */
+  .time-group + .time-group { margin-top: 14px; }
+  .time-group p { font-size: 13px; color: var(--sub); margin-bottom: 8px; }
+  .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .slot { height: 42px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }
+  .slot.sel { border-color: var(--main); background: var(--main-weak); color: var(--main); font-weight: 700; }
+  .slot:disabled { background: #fafafa; color: var(--disabled); text-decoration: line-through; cursor: default; }
+  .empty { color: var(--sub); font-size: 14px; text-align: center; padding: 20px 0; background: #fafafa; border-radius: 6px; }
+
+  /* 메뉴 */
+  .menu { display: flex; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); align-items: center; }
+  .menu:first-of-type { border-top: 0; padding-top: 0; }
+  .menu .thumb { width: 64px; height: 64px; border-radius: 8px; background: var(--bg); display: flex;
+    align-items: center; justify-content: center; font-size: 32px; flex-shrink: 0; }
+  .menu .meta { flex: 1; min-width: 0; }
+  .menu .meta b { display: block; font-size: 15px; }
+  .menu .meta span { font-size: 13px; color: var(--sub); }
+  .menu .meta em { font-style: normal; font-size: 14px; font-weight: 700; display: block; margin-top: 2px; }
+  .stepper { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; height: 34px; }
+  .stepper button { width: 32px; height: 100%; font-size: 18px; color: #555; }
+  .stepper button:disabled { color: var(--disabled); }
+  .stepper output { width: 26px; text-align: center; font-weight: 600; }
+
+  /* 알림 팝업 */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: none; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
+  .modal.show { display: flex; }
+  .modal .box { width: 100%; max-width: 320px; background: #fff; border-radius: 12px; overflow: hidden; text-align: center; animation: pop .18s ease-out; }
+  .modal .body { padding: 28px 20px 22px; }
+  .modal .icon { font-size: 56px; margin-bottom: 8px; display: inline-block; animation: rage .12s 6 alternate; }
+  @keyframes rage { from { transform: translateX(-4px) rotate(-6deg); } to { transform: translateX(4px) rotate(6deg); } }
+  .modal h4 { font-size: 17px; margin-bottom: 6px; }
+  .modal p { font-size: 14px; color: var(--sub); }
+  .modal button { width: 100%; height: 52px; border-top: 1px solid var(--line); color: var(--main); font-size: 16px; font-weight: 700; }
+  @keyframes pop { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  /* 인원 */
+  .row-between { display: flex; align-items: center; justify-content: space-between; }
+  .row-between .label b { display: block; }
+  .row-between .label span { font-size: 13px; color: var(--sub); }
+
+  /* 입력 */
+  .field + .field { margin-top: 14px; }
+  .field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .field input, .field textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px; outline: none; background: #fff; }
+  .field input:focus, .field textarea:focus { border-color: var(--main); }
+  .field textarea { resize: none; height: 84px; }
+  .field .counter { text-align: right; font-size: 12px; color: var(--sub); margin-top: 4px; }
+  /* 장소 정하기 */
+  .area-tabs { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .area-tabs button { height: 40px; font-size: 14px; color: #555; border-left: 1px solid var(--line); }
+  .area-tabs button:first-child { border-left: 0; }
+  .area-tabs button.on { background: var(--main); color: #fff; font-weight: 700; }
+  .place-item { display: flex; align-items: center; gap: 10px; padding: 12px 4px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .place-item .radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--disabled); flex-shrink: 0; }
+  .place-item.on .radio { border: 6px solid var(--main); }
+  .place-item .p { flex: 1; min-width: 0; }
+  .place-item .p b { display: block; font-size: 15px; }
+  .place-item .p span { font-size: 12px; color: var(--sub); }
+  .place-item .p em { font-style: normal; font-size: 12px; color: var(--main); margin-left: 4px; }
+  .place-item a { font-size: 12px; color: #555; border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; text-decoration: none; white-space: nowrap; }
+  .place-tools { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 10px; font-size: 13px; }
+  .place-tools button { color: var(--main); font-weight: 700; }
+  .place-tools a { color: var(--sub); text-decoration: none; }
+  .ticket dd a { color: var(--main); margin-left: 6px; font-size: 13px; }
+
+  /* 동의 */
+  .agree { display: grid; gap: 12px; }
+  .check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+  .check input { width: 20px; height: 20px; accent-color: var(--main); flex-shrink: 0; margin-top: 1px; }
+  .check.all { font-weight: 700; font-size: 15px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .check small { color: var(--sub); }
+
+  /* 하단 고정 바 */
+  .bottom { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: 100%; max-width: 480px;
+    background: #fff; border-top: 1px solid var(--line); padding: 10px 16px calc(12px + env(safe-area-inset-bottom)); z-index: 30; }
+  .bottom .summary { font-size: 13px; color: var(--sub); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bottom .summary b { color: var(--text); }
+  .cta { width: 100%; height: 52px; border-radius: 8px; background: var(--main); color: #fff; font-size: 17px; font-weight: 700; }
+  .cta:disabled { background: #dcdcdc; color: #fff; cursor: default; }
+
+  /* 완료 화면 */
+  .done { display: none; padding: 34px 16px 20px; }
+  .done .check-icon { width: 64px; height: 64px; border-radius: 50%; background: var(--main); color: #fff;
+    font-size: 34px; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+  .done h2 { text-align: center; font-size: 21px; }
+  .done .desc { text-align: center; color: var(--sub); font-size: 14px; margin-top: 6px; }
+  .ticket { margin-top: 24px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .ticket .head { background: var(--main-weak); padding: 14px 16px; display: flex; justify-content: space-between; font-size: 14px; }
+  .ticket .head b { color: var(--main); }
+  .ticket dl { padding: 8px 16px 14px; display: grid; grid-template-columns: 80px 1fr; row-gap: 10px; font-size: 14px; }
+  .ticket dt { color: var(--sub); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+  .btn-line { height: 46px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; font-weight: 600; }
+  .btn-line.wide { grid-column: span 2; }
+  .btn-kakao { grid-column: span 2; height: 52px; border-radius: 8px; background: #fee500; color: #191919; font-size: 16px; font-weight: 700; }
+
+  /* 내 예약 목록 */
+  .history { padding: 22px 16px; }
+  .history h3 { font-size: 17px; margin-bottom: 10px; }
+  .hist-item { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-top: 8px; display: flex; gap: 10px; align-items: center; }
+  .hist-item .t { flex: 1; font-size: 14px; }
+  .hist-item .t b { display: block; }
+  .hist-item .t span { color: var(--sub); font-size: 13px; }
+  .hist-item .status { font-size: 12px; color: var(--main); font-weight: 700; }
+  .hist-item button { font-size: 12px; color: var(--sub); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; }
+
+  .toast { position: fixed; left: 50%; bottom: 130px; transform: translateX(-50%); background: rgba(0,0,0,.8);
+    color: #fff; padding: 10px 16px; border-radius: 20px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <button class="back" id="backBtn" aria-label="뒤로">‹</button>
+    <h1 id="topTitle">예약하기</h1>
+  </header>
+
+  <!-- 예약 화면 -->
+  <main id="bookView">
+    <div class="cover" role="img" aria-label="승찬이랑 마신 소주병 사진"><span class="badge">실시간 예약 가능</span></div>
+    <div class="shop">
+      <div class="cat">술약속 · 1차부터 막차까지</div>
+      <h2>임승찬</h2>
+      <div class="rating"><span class="star">★</span> <b>4.98</b> · 방문자 리뷰 999+ · "또 마시고 싶어요" 1,204</div>
+      <div class="info">
+        <div><span>🕖</span><span>평일 19:00 ~ 막차 / 주말 18:00 ~ 첫차 · <b>화요일 휴무(수요일 1교시 진동공학)</b></span></div>
+        <div><span>📍</span><span>대구 · 북문 / 복현오거리 / 시내 / 교동</span></div>
+        <div><span>💬</span><span>예약 확정 후 카톡으로 연락드려요</span></div>
+      </div>
+      <div class="tags"><span>#분위기메이커</span><span>#소주파</span><span>#2차필수</span><span>#집에안감</span></div>
+    </div>
+
+    <!-- 1. 날짜 -->
+    <section class="block">
+      <div class="block-title"><h3>날짜 선택 <span class="req">*</span></h3><small id="dateLabel"></small></div>
+      <div class="cal-head">
+        <button id="prevM" aria-label="이전 달">‹</button>
+        <strong id="monthLabel"></strong>
+        <button id="nextM" aria-label="다음 달">›</button>
+      </div>
+      <div class="cal" id="cal"></div>
+    </section>
+
+    <!-- 2. 시간 -->
+    <section class="block">
+      <div class="block-title"><h3>시간 선택 <span class="req">*</span></h3><small id="timeLabel"></small></div>
+      <div id="slots"><div class="empty">날짜를 먼저 선택해 주세요</div></div>
+    </section>
+
+    <!-- 3. 주종 -->
+    <section class="block">
+      <div class="block-title"><h3>주종 선택 <span class="req">*</span></h3><small id="menuLabel"></small></div>
+      <div id="menus"></div>
+    </section>
+
+    <!-- 4. 인원 -->
+    <section class="block">
+      <div class="row-between">
+        <div class="label"><b>인원 (승찬이 포함)</b><span>최대 10명까지 예약 가능해요</span></div>
+        <div class="stepper">
+          <button id="pMinus" aria-label="인원 빼기">−</button>
+          <output id="pCount">2</output>
+          <button id="pPlus" aria-label="인원 더하기">+</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 예약자 정보 -->
+    <section class="block">
+      <div class="block-title"><h3>예약자 정보</h3></div>
+      <div class="field">
+        <label for="name">이름 <span class="req">*</span></label>
+        <input id="name" maxlength="20" placeholder="승찬이가 알아볼 수 있는 이름">
+      </div>
+      <div class="field">
+        <label>장소 정하기</label>
+        <div class="area-tabs" id="areaTabs"></div>
+        <div id="placeList"></div>
+        <div class="place-tools">
+          <button type="button" id="randomPlace">🎲 아무 데나 골라줘</button>
+          <a id="moreMap" target="_blank" rel="noopener">카카오맵에서 더 찾기 ›</a>
+        </div>
+        <input id="place" maxlength="40" placeholder="목록에 없으면 직접 입력 (예: 북문 앞 포차)">
+      </div>
+      <div class="field">
+        <label for="memo">요청사항</label>
+        <textarea id="memo" maxlength="150" placeholder="예) 이번엔 진짜 1차만 해요"></textarea>
+        <div class="counter"><span id="memoLen">0</span>/150</div>
+      </div>
+    </section>
+
+    <!-- 6. 동의 -->
+    <section class="block">
+      <div class="agree">
+        <label class="check all"><input type="checkbox" id="agreeAll"> 전체 동의</label>
+        <label class="check"><input type="checkbox" class="ag" data-required="1"> <span>[필수] 다음 날 숙취에 대해 승찬이에게 책임을 묻지 않습니다</span></label>
+        <label class="check"><input type="checkbox" class="ag" data-required="1"> <span>[필수] 승찬이가 집에 가고 싶을 땐 집에 갑니다</span></label>      </div>
+    </section>
+  </main>
+
+  <!-- 완료 화면 -->
+  <main class="done" id="doneView">
+    <div class="check-icon">✓</div>
+    <h2>예약 신청이 완료됐어요!</h2>
+    <p class="desc">아래 내용을 승찬이에게 보내면 예약이 확정돼요</p>
+    <div class="ticket">
+      <div class="head"><span>예약번호</span><b id="rNo"></b></div>
+      <dl id="rDetail"></dl>
+    </div>
+    <div class="actions">
+      <button class="btn-kakao" id="kakaoBtn">💬 카카오톡으로 승찬이에게 보내기</button>
+      <button class="btn-line" id="copyBtn">📋 카톡용 복사</button>
+      <button class="btn-line" id="icsBtn">📅 캘린더 추가</button>
+      <button class="btn-line wide" id="againBtn">새 약속 잡기</button>
+    </div>
+  </main>
+
+  <div class="history" id="history"></div>
+</div>
+
+<div class="bottom" id="bottomBar">
+  <div class="summary" id="summary">날짜와 시간을 선택해 주세요</div>
+  <button class="cta" id="submitBtn" disabled>예약 신청하기</button>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal" id="sojuModal" role="alertdialog" aria-modal="true" aria-labelledby="sojuTitle">
+  <div class="box">
+    <div class="body">
+      <div class="icon">🤬</div>
+      <h4 id="sojuTitle">승찬이의 주량을 넘겼어요</h4>
+      <p>소주는 3병까지만 예약할 수 있어요</p>
+    </div>
+    <button id="sojuOk">적당히 먹겠습니다</button>
+  </div>
+</div>
+
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" crossorigin="anonymous"></script>
+<script>
+// Kakao Developers(developers.kakao.com) > 내 애플리케이션 > 앱 키 > "JavaScript 키"를 여기에 넣으세요.
+// 비워 두면 카톡 버튼은 내용 복사 후 안내만 해요.
+const KAKAO_JS_KEY = '';
+
+// 예약이 들어오면 구글 폼(→ 연결된 구글 시트)으로 한 줄씩 저장돼요. 둘 다 채워야 동작해요.
+// FORM_ID: 폼 주소 docs.google.com/forms/d/e/<여기>/viewform 의 <여기> 부분
+// FORM_ENTRY: "미리 채워진 링크"에 보이는 entry.숫자
+const FORM_ID = '1FAIpQLSd9tPmEN79vd39w5GD-kDogD9TcYZeYob2QDew-eqF3k0lJwA';
+const FORM_ENTRY = 'entry.2035290038';
+
+const $ = (id) => document.getElementById(id);
+const DOW = ['일','월','화','수','목','금','토'];
+const MENUS = [
+  { id: 'soju',   emoji: '🍶', name: '소주',     desc: '승찬이 최애 · 기본 2병부터', unit: '병' },
+  { id: 'beer',   emoji: '🍺', name: '생맥주',   desc: '500cc · 소맥 재료로도 OK', unit: '잔' },
+  { id: 'hb',     emoji: '🥃', name: '하이볼',   desc: '달달하게 시작하고 싶을 때', unit: '잔' },
+  { id: 'mak',    emoji: '🍚', name: '막걸리',   desc: '비 오는 날 + 전 추천', unit: '병' },
+  { id: 'wine',   emoji: '🍷', name: '와인',     desc: '분위기 잡을 때 (가끔)', unit: '병' },
+];
+// 카카오맵 검색 결과(2026.11 기준)로 채운 동네별 술집 목록
+const AREAS = {
+  '북문': { q: '경북대 북문 술집', list: [
+    ['정든밤 경북대점', '호프·요리주점', '북구 산격로6길 23-1', '1882228961'],
+    ['구구포차', '호프·요리주점', '북구 산격로6길 26', '1571369483'],
+    ['정선생 경북대점', '호프·요리주점', '북구 산격로6길 23', '19306450'],
+    ['오뉴월', '이자카야', '북구 산격로6길 24', '2091672841'],
+    ['가인', '호프·요리주점', '북구 대학로15길 7', '21883282'],
+  ]},
+  '복현오거리': { q: '복현오거리 술집', list: [
+    ['북성로우동불고기포차', '실내포차', '북구 동북로 232-1', '18839778'],
+    ['복현쌍갑포차 본점', '실내포차', '북구 경진로1길 41', '1256613266'],
+    ['이야기', '이자카야', '북구 경진로1길 8', '16958044'],
+    ['교동감나무집 복현점', '실내포차', '북구 대학로 152-1', '690236982'],
+    ['역전할머니맥주 대구복현점', '호프', '북구 동북로 219', '1152780225'],
+  ]},
+  '시내': { q: '대구 동성로 술집', list: [
+    ['도쿄시장 동성로점', '이자카야', '중구 동성로4길 43', '959199834'],
+    ['루츠', '술집', '중구 동성로3길 58-18', '525038000'],
+    ['브루어스 브라더스', '호프·요리주점', '중구 종로 29', '27403351'],
+    ['대화장', '와인바', '중구 북성로 104-15', '723632828'],
+    ['온달포장 종로점', '실내포차', '중구 중앙대로81길 34', '1916030529'],
+  ]},
+  '교동': { q: '대구 교동 술집', list: [
+    ['교동청춘', '호프·요리주점', '중구 공평로 73-1', '586911712'],
+    ['교동낙원', '이자카야', '중구 국채보상로 627', '1015871984'],
+    ['대구교동 총총', '술집', '중구 경상감영길 190', '1081434004'],
+    ['야키토리로만 교동점', '이자카야', '중구 경상감영길 167', '1859931945'],
+    ['교동 지은심', '호프·요리주점', '중구 경상감영길 212', '600626024'],
+  ]},
+};
+const placeUrl = (id) => `https://place.map.kakao.com/${id}`;
+const STORE = 'seungchan-bookings';
+const SOJU_LIMIT = 4; // 소주 이 병수 이상이면 예약 불가
+
+const today = new Date(); today.setHours(0,0,0,0);
+const maxDate = new Date(today); maxDate.setDate(maxDate.getDate() + 60);
+
+const state = {
+  view: new Date(today.getFullYear(), today.getMonth(), 1),
+  date: null, time: null, people: 2, area: '북문', placeId: null,
+  qty: Object.fromEntries(MENUS.map(m => [m.id, 0])),
+};
+
+// 날짜별로 항상 같은 '마감' 결과가 나오도록 하는 간단한 해시
+function hash(str) { let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; }
+const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmtDate = (d) => `${d.getMonth()+1}.${d.getDate()}(${DOW[d.getDay()]})`;
+const isOff = (d) => d.getDay() === 2; // 화요일 = 숙취 휴무
+
+function bookedSlots() {
+  return (JSON.parse(localStorage.getItem(STORE) || '[]')).map(b => b.date + ' ' + b.time);
+}
+
+/* ---------- 달력 ---------- */
+function renderCal() {
+  const y = state.view.getFullYear(), m = state.view.getMonth();
+  $('monthLabel').textContent = `${y}.${String(m+1).padStart(2,'0')}`;
+  $('prevM').disabled = y === today.getFullYear() && m === today.getMonth();
+  $('nextM').disabled = new Date(y, m + 1, 1) > maxDate;
+
+  const cal = $('cal'); cal.innerHTML = '';
+  DOW.forEach(d => cal.insertAdjacentHTML('beforeend', `<div class="dow">${d}</div>`));
+  const first = new Date(y, m, 1).getDay();
+  const last = new Date(y, m + 1, 0).getDate();
+  for (let i = 0; i < first; i++) cal.insertAdjacentHTML('beforeend', '<div></div>');
+
+  for (let day = 1; day <= last; day++) {
+    const d = new Date(y, m, day);
+    const cell = document.createElement('div');
+    const past = d < today || d > maxDate;
+    const off = isOff(d);
+    cell.className = 'day' + (d.getDay() === 0 ? ' sun' : '') + (d.getDay() === 6 ? ' sat' : '')
+      + (past ? ' past' : '') + (!past && off ? ' off' : '')
+      + (+d === +today ? ' today' : '') + (state.date && +d === +state.date ? ' sel' : '');
+    const note = past ? '' : off ? '휴무' : (+d === +today ? '오늘' : '');
+    cell.innerHTML = `<button ${past || off ? 'disabled' : ''}>${day}</button><span class="note">${note}</span>`;
+    if (!past && !off) cell.querySelector('button').onclick = () => {
+      state.date = d; state.time = null; renderCal(); renderSlots(); update();
+    };
+    cal.appendChild(cell);
+  }
+}
+
+/* ---------- 시간 ---------- */
+function renderSlots() {
+  const box = $('slots');
+  if (!state.date) { box.innerHTML = '<div class="empty">날짜를 먼저 선택해 주세요</div>'; return; }
+  const weekend = [0, 5, 6].includes(state.date.getDay());
+  const start = weekend ? 17 : 19;
+  const groups = { '저녁 (1차)': [], '밤 (2차)': [], '새벽 (3차)': [] };
+  for (let h = start; h <= 25; h++) for (const mm of [0, 30]) {
+    if (h === 25 && mm === 30) continue;
+    const label = `${String(h % 24).padStart(2,'0')}:${mm ? '30' : '00'}`;
+    const key = h < 21 ? '저녁 (1차)' : h < 24 ? '밤 (2차)' : '새벽 (3차)';
+    groups[key].push(label);
+  }
+  const taken = bookedSlots();
+  const key = ymd(state.date);
+  box.innerHTML = '';
+  for (const [name, list] of Object.entries(groups)) {
+    if (!list.length) continue;
+    const g = document.createElement('div'); g.className = 'time-group';
+    g.innerHTML = `<p>${name}</p><div class="slots"></div>`;
+    const wrap = g.querySelector('.slots');
+    list.forEach(t => {
+      const full = hash(key + t) % 5 === 0 || taken.includes(key + ' ' + t);
+      const b = document.createElement('button');
+      b.className = 'slot' + (state.time === t ? ' sel' : '');
+      b.textContent = t; b.disabled = full;
+      b.onclick = () => { state.time = t; renderSlots(); update(); };
+      wrap.appendChild(b);
+    });
+    box.appendChild(g);
+  }
+}
+
+/* ---------- 주종 ---------- */
+function renderMenus() {
+  $('menus').innerHTML = MENUS.map(m => `
+    <div class="menu">
+      <div class="thumb">${m.emoji}</div>
+      <div class="meta"><b>${m.name}</b><span>${m.desc}</span><em>더치페이</em></div>
+      <div class="stepper">
+        <button data-id="${m.id}" data-d="-1" aria-label="${m.name} 빼기">−</button>
+        <output id="q-${m.id}">0</output>
+        <button data-id="${m.id}" data-d="1" aria-label="${m.name} 더하기">+</button>
+      </div>
+    </div>`).join('');
+  $('menus').querySelectorAll('button').forEach(b => b.onclick = () => {
+    const id = b.dataset.id;
+    const before = state.qty[id];
+    state.qty[id] = Math.max(0, Math.min(20, state.qty[id] + Number(b.dataset.d)));
+    if (id === 'soju' && before < SOJU_LIMIT && state.qty[id] >= SOJU_LIMIT) {
+      $('sojuModal').classList.add('show'); $('sojuOk').focus();
+    }
+    syncMenus(); update();
+  });
+  // 팝업은 버튼을 눌러야만 닫히고, 소주는 한도 아래(3병)로 돌아가요
+  $('sojuOk').onclick = () => {
+    state.qty.soju = SOJU_LIMIT - 1;
+    $('sojuModal').classList.remove('show');
+    syncMenus(); update();
+  };
+  syncMenus();
+}
+function syncMenus() {
+  MENUS.forEach(m => {
+    $('q-' + m.id).textContent = state.qty[m.id];
+    document.querySelector(`[data-id="${m.id}"][data-d="-1"]`).disabled = state.qty[m.id] === 0;
+  });
+}
+const menuText = () => MENUS.filter(m => state.qty[m.id] > 0)
+  .map(m => `${m.name} ${state.qty[m.id]}${m.unit}`).join(', ');
+
+/* ---------- 인원 / 입력 ---------- */
+function syncPeople() {
+  $('pCount').textContent = state.people;
+  $('pMinus').disabled = state.people <= 2;
+  $('pPlus').disabled = state.people >= 10;
+}
+$('pMinus').onclick = () => { state.people--; syncPeople(); update(); };
+$('pPlus').onclick = () => { state.people++; syncPeople(); update(); };
+
+/* ---------- 장소 정하기 ---------- */
+function renderAreas() {
+  $('areaTabs').innerHTML = Object.keys(AREAS).map(a =>
+    `<button type="button" class="${a === state.area ? 'on' : ''}">${a}</button>`).join('');
+  $('areaTabs').querySelectorAll('button').forEach(b => b.onclick = () => { state.area = b.textContent; renderAreas(); });
+  const area = AREAS[state.area];
+  $('placeList').innerHTML = area.list.map(([n, c, addr, id]) => `
+    <div class="place-item ${state.placeId === id ? 'on' : ''}" data-id="${id}">
+      <span class="radio"></span>
+      <div class="p"><b>${n}</b><span>${addr}</span><em>${c}</em></div>
+      <a href="${placeUrl(id)}" target="_blank" rel="noopener">지도</a>
+    </div>`).join('');
+  $('placeList').querySelectorAll('.place-item').forEach(el => el.onclick = (e) => {
+    if (e.target.tagName === 'A') return;
+    pickPlace(el.dataset.id);
+  });
+  $('moreMap').href = `https://map.kakao.com/?q=${encodeURIComponent(area.q)}`;
+}
+function findPlace(id) {
+  for (const [area, { list }] of Object.entries(AREAS)) {
+    const p = list.find(x => x[3] === id);
+    if (p) return { area, name: p[0], id };
+  }
+}
+function pickPlace(id) {
+  const p = findPlace(id);
+  state.placeId = id; state.area = p.area;
+  $('place').value = `${p.area} ${p.name}`;
+  renderAreas();
+}
+$('randomPlace').onclick = () => {
+  const list = AREAS[state.area].list.filter(p => p[3] !== state.placeId);
+  pickPlace(list[Math.floor(Math.random() * list.length)][3]);
+  toast(`🎲 ${$('place').value} 당첨!`);
+};
+$('place').oninput = () => { state.placeId = null; renderAreas(); };
+$('memo').oninput = () => { $('memoLen').textContent = $('memo').value.length; };
+$('name').oninput = update;
+
+const ags = [...document.querySelectorAll('.ag')];
+$('agreeAll').onchange = (e) => { ags.forEach(a => a.checked = e.target.checked); update(); };
+ags.forEach(a => a.onchange = () => { $('agreeAll').checked = ags.every(x => x.checked); update(); });
+
+/* ---------- 상태 갱신 ---------- */
+function update() {
+  $('dateLabel').textContent = state.date ? fmtDate(state.date) : '';
+  $('timeLabel').textContent = state.time || '';
+  const mt = menuText();
+  $('menuLabel').textContent = mt ? `${MENUS.filter(m => state.qty[m.id]).length}개 선택` : '';
+
+  const missing = [];
+  if (!state.date) missing.push('날짜');
+  if (!state.time) missing.push('시간');
+  if (!mt) missing.push('주종');
+  if (state.qty.soju >= SOJU_LIMIT) missing.unshift('주량');
+  if (!$('name').value.trim()) missing.push('이름');
+  if (!ags.filter(a => a.dataset.required).every(a => a.checked)) missing.push('필수 동의');
+
+  $('summary').innerHTML = state.date && state.time
+    ? `<b>${fmtDate(state.date)} ${state.time}</b> · ${state.people}명${mt ? ' · ' + mt : ''}`
+    : '날짜와 시간을 선택해 주세요';
+  $('submitBtn').disabled = missing.length > 0;
+  const HINT = { '주량': '승찬이의 주량을 넘겼어요 🤬', '날짜': '날짜를 선택해 주세요', '시간': '시간을 선택해 주세요', '주종': '주종을 골라 주세요',
+    '이름': '이름을 입력해 주세요', '필수 동의': '필수 항목에 동의해 주세요' };
+  $('submitBtn').textContent = missing.length ? HINT[missing[0]] : '예약 신청하기';
+}
+
+/* ---------- 예약 / 완료 ---------- */
+let current = null;
+$('submitBtn').onclick = () => {
+  if (state.qty.soju >= SOJU_LIMIT) { toast('승찬이의 주량을 넘겼어요 🤬'); return; }
+  const no = 'SC' + ymd(state.date).replace(/-/g, '').slice(2) + '-' + String(Math.floor(Math.random() * 9000) + 1000);
+  current = {
+    no, date: ymd(state.date), dateText: fmtDate(state.date), time: state.time,
+    people: state.people, menu: menuText(),
+    name: $('name').value.trim(), place: $('place').value.trim(), memo: $('memo').value.trim(),
+    placeUrl: state.placeId ? placeUrl(state.placeId) : '',
+    createdAt: Date.now(),
+  };
+  const list = JSON.parse(localStorage.getItem(STORE) || '[]');
+  list.unshift(current); localStorage.setItem(STORE, JSON.stringify(list));
+  sendToForm(current);
+  showDone();
+};
+
+// 구글 폼으로 예약 한 줄 전송 (응답은 못 읽지만 시트에는 쌓여요)
+function sendToForm(c) {
+  if (!FORM_ID || !FORM_ENTRY) return;
+  const line = `[${c.no}] ${c.name} | ${c.dateText} ${c.time} | ${c.people}명 | ${c.menu} | ${c.place || '장소 미정'}`
+    + (c.placeUrl ? ` ${c.placeUrl}` : '') + (c.memo ? ` | 요청: ${c.memo}` : '');
+  fetch(`https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`, {
+    method: 'POST', mode: 'no-cors', body: new URLSearchParams({ [FORM_ENTRY]: line }),
+  }).catch(() => {});
+}
+
+function showDone() {
+  const c = current;
+  $('rNo').textContent = c.no;
+  const rows = [
+    ['예약자', c.name], ['일시', `${c.dateText} ${c.time}`], ['인원', `${c.people}명 (승찬이 포함)`],
+    ['주종', c.menu], ['장소', c.place || '승찬이가 정함'], ['요청사항', c.memo || '-'],  ];
+  $('rDetail').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}${
+    k === '장소' && c.placeUrl ? ` <a href="${c.placeUrl}" target="_blank" rel="noopener">지도 보기</a>` : ''}</dd>`).join('');
+  $('bookView').style.display = 'none';
+  $('doneView').style.display = 'block';
+  $('bottomBar').style.display = 'none';
+  $('topTitle').textContent = '예약 완료';
+  window.scrollTo(0, 0);
+  renderHistory();
+}
+
+function shareText(c) {
+  return `🍻 [임승찬 술약속 예약 신청]\n예약번호: ${c.no}\n예약자: ${c.name}\n일시: ${c.dateText} ${c.time}\n인원: ${c.people}명\n주종: ${c.menu}\n장소: ${c.place || '승찬이가 정해줘'}`
+    + (c.placeUrl ? `\n지도: ${c.placeUrl}` : '')
+    + (c.memo ? `\n요청: ${c.memo}` : '') + `\n\n확정해 줘!`;
+}
+async function copyText() {
+  const text = shareText(current);
+  try { await navigator.clipboard.writeText(text); toast('복사했어요! 카톡에 붙여넣기 하세요'); }
+  catch { prompt('아래 내용을 복사하세요', text); }
+}
+$('copyBtn').onclick = copyText;
+
+// 카카오톡 공유: 친구가 공유창에서 승찬이를 고르면 바로 카톡으로 전달돼요
+$('kakaoBtn').onclick = () => {
+  if (!KAKAO_JS_KEY || !window.Kakao) { copyText(); return; }
+  if (!Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY);
+  const text = shareText(current);
+  Kakao.Share.sendDefault({
+    objectType: 'text',
+    text: text.length > 200 ? text.slice(0, 197) + '...' : text, // 카카오 텍스트 템플릿은 200자 제한
+    link: { mobileWebUrl: location.href, webUrl: location.href },
+    buttonTitle: '약속 페이지 열기',
+  });
+};
+$('icsBtn').onclick = () => {
+  const c = current;
+  let [h, m] = c.time.split(':').map(Number);
+  const d = new Date(c.date + 'T00:00:00');
+  if (h < 12) d.setDate(d.getDate() + 1); // 00:00~01:00 슬롯은 다음 날 새벽
+  d.setHours(h, m);
+  const end = new Date(d.getTime() + 3 * 3600 * 1000);
+  const f = (x) => `${x.getFullYear()}${String(x.getMonth()+1).padStart(2,'0')}${String(x.getDate()).padStart(2,'0')}T${String(x.getHours()).padStart(2,'0')}${String(x.getMinutes()).padStart(2,'0')}00`;
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//seungchan//booking//KO','BEGIN:VEVENT',
+    `UID:${c.no}@seungchan`, `DTSTART:${f(d)}`, `DTEND:${f(end)}`,
+    `SUMMARY:🍻 임승찬이랑 술약속`, `LOCATION:${c.place || '미정'}`,
+    `DESCRIPTION:${c.menu} / ${c.people}명`, 'END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+  a.download = `술약속_${c.date}.ics`; a.click();
+};
+$('againBtn').onclick = resetForm;
+$('backBtn').onclick = () => { if ($('doneView').style.display === 'block') resetForm(); else history.back(); };
+
+function resetForm() {
+  state.date = null; state.time = null; state.people = 2; state.placeId = null;
+  MENUS.forEach(m => state.qty[m.id] = 0);
+  ['name','place','memo'].forEach(id => $(id).value = '');
+  $('memoLen').textContent = 0; $('agreeAll').checked = false; ags.forEach(a => a.checked = false);
+  $('bookView').style.display = ''; $('doneView').style.display = 'none'; $('bottomBar').style.display = '';
+  $('topTitle').textContent = '예약하기';
+  renderCal(); renderSlots(); syncMenus(); syncPeople(); renderAreas(); update(); renderHistory();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- 내 예약 ---------- */
+function renderHistory() {
+  const list = JSON.parse(localStorage.getItem(STORE) || '[]');
+  const box = $('history');
+  if (!list.length) { box.innerHTML = ''; return; }
+  box.innerHTML = `<h3>내 예약 내역 ${list.length}</h3>` + list.map((b, i) => {
+    const past = new Date(b.date + 'T23:59:59') < new Date();
+    return `<div class="hist-item">
+      <div class="t"><b>${b.dateText} ${b.time} · ${b.people}명</b><span>${esc(b.menu)}${b.place ? ' · ' + esc(b.place) : ''}</span></div>
+      <span class="status">${past ? '방문완료' : '신청완료'}</span>
+      <button data-i="${i}">${past ? '삭제' : '취소'}</button>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('button').forEach(btn => btn.onclick = () => {
+    if (!confirm('이 예약을 취소할까요? 승찬이가 슬퍼해요 🥲')) return;
+    list.splice(Number(btn.dataset.i), 1);
+    localStorage.setItem(STORE, JSON.stringify(list));
+    renderHistory(); if (state.date) renderSlots();
+  });
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let tt; function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2000); }
+
+$('prevM').onclick = () => { state.view.setMonth(state.view.getMonth() - 1); renderCal(); };
+$('nextM').onclick = () => { state.view.setMonth(state.view.getMonth() + 1); renderCal(); };
+
+renderCal(); renderMenus(); syncPeople(); renderAreas(); update(); renderHistory();
+</script>
+</body>
+</html>
